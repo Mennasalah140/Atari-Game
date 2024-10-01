@@ -1,0 +1,266 @@
+EXECUTEPACMAN FUNCTION
+	
+	PUSH {R0-R12,LR}
+	MOV R0, #0
+	MOV R1, #0
+	MOV R3, #320
+	MOV R4, #240
+	LDR R10, =BLACK
+	BL DRAW_RECTANGLE_FILLED
+	BL INITIALIZE_VARIABLES
+	
+	;; KEY VALUE IN R9
+	MOV R9, #0   ;THIS FOR KEY
+	MOV R6,#0    ;THIS FOR LEVEL CHECK
+	BL DRAW_LEVEL1
+	
+	BL DRAW_WALLS
+	BL DRAW_PRISONER
+	
+
+	LDR R7,=GHOST1X     ;SETTING THE VALUE OF X1
+	LDR R8,=GHOST1Y   ;SETTING THE VALUE OF Y1
+	LDRH R0,[R7]
+	LDRH R1,[R8]
+	BL DRAW_GHOST
+
+    LDR R7,=GHOST2X     ;SETTING THE VALUE OF X1
+	LDR R8,=GHOST2Y     ;SETTING THE VALUE OF Y1
+	LDRH R0,[R7]
+	LDRH R1,[R8]
+
+	BL DRAW_GHOST
+	
+	LDR R7,=GHOST3X      ;SETTING THE VALUE OF X1
+	LDR R8,=GHOST3Y     ;SETTING THE VALUE OF Y1
+	LDRH R0,[R7]
+	LDRH R1,[R8]
+	BL DRAW_GHOST
+
+
+     MOV R8,#302
+	 MOV R6,#169
+     BL DRAW_CIRCLE    ;DRAW KEY
+	 
+	 
+	 MOV R0,#20
+	 MOV R1,#215
+	 BL Draw_Arrow
+	 
+
+	
+   ; BL DRAW_TIMEOUT
+;//////////////////////////////////////Check if button is pressed///////////////////////////////////////
+INFINITELOOP 
+	 LDR R5, =COUNTER
+	 LDRH R0,[R5]
+	 ldr r12,=GPIOB_IDR
+	 ldr r11,[r12]
+	 MOV R2, #1
+	 LSL R2, #4
+	 AND r11,r11, R2
+	 CMP R11, #0
+	 BEQ jump2
+	 ldr r12,=GPIOB_IDR
+	 ldr r11,[r12]
+	 MOV R2, #1
+	 LSL R2, #7
+	 AND r11,r11, R2
+	 CMP R11, #0
+	 BEQ jump4
+	 ldr r12,=GPIOB_IDR
+	 ldr r11,[r12]
+	 MOV R2, #1
+	 LSL R2, #5
+	 AND r11,r11, R2
+	 CMP R11, #0
+	 BEQ jump6
+	 ldr r12,=GPIOC_IDR
+	 ldr r11,[r12]
+	 MOV R2, #1
+	 LSL R2, #15
+	 AND r11,r11, R2
+	 CMP R11, #0
+	 BEQ jump8
+CONT
+	 BL MOVE_GHOST1_RIGHT
+	 BL MOVE_GHOST1_LEFT
+	 BL MOVE_GHOST2_RIGHT
+	 BL MOVE_GHOST2_LEFT
+	 BL MOVE_GHOST3_RIGHT
+	 BL MOVE_GHOST3_LEFT
+	 BL GHOST_COLLISION
+	 
+	 SUB  R0,#1
+	 STRH R0,[R5]
+	 
+	 ;CMP R6,#1
+	 B TIMERLEVEL2
+	 
+RETURN4
+;; Collecting Key
+     LDR R4,=PRISONERX
+	 LDRH R5,[R4]
+     CMP R5,#270   ;X comparison
+     BGE CHECK_Y
+	 
+RETURN 
+;; WIN CONDITION
+     LDR R4,=PRISONERX   ;if prisoner at position x go to check y 
+	 LDRH R5,[R4]
+     CMP R5,#40    ;X comparison
+     BLT OPEN_Y    ;else if not at posion x  go forward in infinite loop        
+
+RETURN2
+      B INFINITELOOP
+	
+
+
+;	 
+OPEN_Y  
+   LDR R4,=PRISONERY     ;if prisoner at position y go to check if he has the key 
+   LDRH R5,[R4]
+   CMP R5, #192
+   BGE CHECK_COLLECTING_KEY
+   B RETURN2       ;else go back he is not at the open 
+   
+CHECK_COLLECTING_KEY    ;if prisoner has the key 
+    CMP R9,#1    ;r9 determines if prisoner has the key = 1 not 0
+	;PUSH{R9,R10}
+	BEQ Win_Animation    ;then he wins 
+	B RETURN2
+
+;  
+;     
+Win_Animation
+     BL DRAW_HIDDEN_PRISONER
+     BL DRAW_winner
+	 BL delay_half_second
+	 MOV R0, #0
+	 MOV R1, #0
+	 MOV R3, #320
+	 MOV R4, #240 
+	 LDR R10, =WHITE
+	 BL DRAW_RECTANGLE_FILLED
+	 MOV R0,#100
+	 MOV R1,#90
+	 BL DRAW_WIN_ANIMATION
+	 BL delay_half_second
+	 CMP R6,#1    ;IF HE IS IN LEVEL 1
+	 BNE GET_LEVEL2
+	 CMP R6,#1    ;IF HE IS IN LEVEL2
+;	 LDR R12,=LEVEL
+;	 LDRH R11,[R10]
+;	 CMP r11,#1   ;IF HE IS IN LEVEL 1
+     BEQ GET_END	  ;END OF GAME OR GO TO END OF MAIN 
+
+;##########
+
+
+;   B SKIPPED2
+;	LTORG
+;SKIPPED2
+
+;   B  do   
+  B jump
+jump2
+   B GOLEFT
+jump
+;do
+
+  B jump3
+jump4
+   B GORIGHT
+jump3
+
+
+  B jump5
+jump6
+   B GODOWN
+jump5
+
+  B jump7
+jump8
+   B GOUP
+jump7
+
+GET_LEVEL1
+    BL INITIALIZE_VARIABLES
+    BL DRAW_LEVEL1  ;GO TO LEVEL
+	B RETURN2 
+;	
+;	
+GET_LEVEL2
+;	 LDR R12,=LEVEL
+;	 LDRH R11,[R12]
+;	 MOV R11,#1    ;CHANGE TO BE THAT HE IS IN LEVEL2
+;	 STRH R11,[R12]
+      mov r6,#1
+	 mov r9,#0
+	 BL INITIALIZE_VARIABLES
+     BL DRAW_LEVEL2
+	 B RETURN2
+	
+CHECK_Y
+   LDR R4,=PRISONERY
+   LDRH R5,[R4]
+   CMP R5, #0x98
+   BGE COLLECT_KEY
+   B RETURN
+
+COLLECT_KEY 
+   PUSH{R8,R6}
+    MOV R8,#302
+	MOV R6,#169
+   BL  DRAW_Hidden_Key
+   POP{R8,R6}
+   MOV R8, #300; X
+   push{R6}
+   MOV R6, #4   ;y
+   BL  DRAW_CIRCLE
+   pop{R6}
+   MOV R9,#1
+   B RETURN
+   
+	
+;#######
+
+TIMEEE
+     
+     BL DRAW_TIME
+	 B RETURN4
+
+GORIGHT
+	BL MOVE_PRISONER_RIGHT
+	B CONT
+	
+GOLEFT
+    BL MOVE_PRISONER_LEFT
+	B CONT
+	
+GODOWN
+    BL MOVE_PRISONER_DOWN
+    B CONT
+	
+GOUP
+    BL MOVE_PRISONER_UP
+    B CONT
+	
+TIMERLEVEL2
+	  CMP R0,#0
+	  BEQ COUNTER2
+	  B RETURN4
+COUNTER2	  
+	  LDR R5, =COUNTER
+      LDRH R0,[R5]
+      MOV  R0,#50
+      STRH R0,[R5]
+	  CMP R6,#1
+	  BEQ TIMEEE
+      B RETURN4
+
+;ENDINGG
+;GET_END
+	POP {R0-R12,PC}
+	
+	ENDFUNC
